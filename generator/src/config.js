@@ -24,7 +24,7 @@ const solanaMetadata = {
 // If you have selected Solana then the collection starts from 0 automatically
 const layerConfigurations = [
   {
-    growEditionSizeTo: 10,
+    growEditionSizeTo: 15,
     layersOrder: [
       { name: "wheels" },
       { name: "chasis" },
@@ -37,7 +37,7 @@ const layerConfigurations = [
     ],
   },
   {
-    growEditionSizeTo: 12,
+    growEditionSizeTo: 18,
     layersOrder: [
       { name: "wheels" },
       { name: "chasis" },
@@ -52,9 +52,12 @@ const layerConfigurations = [
   },
 ];
 
+//Yarn run rarity to check rarity of each attribute
+
 //Shuffles the creaton of the layer cfg, this prevents prediction of antenna while minting
 const shuffleLayerConfigurations = true;
 
+//Show extra info while creating collection
 const debugLogs = false;
 
 const format = {
@@ -94,6 +97,7 @@ const background = {
   default: "#000000",
 };
 
+//Place to provide additional meta data (global)
 const extraMetadata = {};
 
 const rarityDelimiter = "#";
