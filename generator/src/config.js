@@ -2,11 +2,11 @@ const basePath = process.cwd();
 const { MODE } = require(`${basePath}/constants/blend_mode.js`);
 const { NETWORK } = require(`${basePath}/constants/network.js`);
 
-const network = NETWORK.eth;
+const network = NETWORK.sol;
 
 // General metadata for Ethereum
-const namePrefix = "Your Collection";
-const description = "Remember to replace this description";
+const namePrefix = "Old Skool Racers";
+const description = "Race your NFTs against your friends.";
 const baseUri = "ipfs://NewUriToReplace";
 
 const solanaMetadata = {
@@ -67,8 +67,8 @@ const format = {
 };
 
 const gif = {
-  export: false,
-  repeat: 0,
+  export: true,
+  repeat: -1,
   quality: 100,
   delay: 500,
 };
