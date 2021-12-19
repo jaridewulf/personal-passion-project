@@ -273,6 +273,10 @@ const isDnaUnique = (_DnaList = new Set(), _dna = "") => {
 };
 
 const createDna = (_layers) => {
+  //Add aditional attributes
+  attributesList = [];
+  attributesList.push({"horsepower": Math.floor(Math.random() * 10)});
+
   let randNum = [];
   _layers.forEach((layer) => {
     var totalWeight = 0;
