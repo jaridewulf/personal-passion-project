@@ -24,21 +24,36 @@ const solanaMetadata = {
 // If you have selected Solana then the collection starts from 0 automatically
 const layerConfigurations = [
   {
-    growEditionSizeTo: 25,
+    growEditionSizeTo: 10,
     layersOrder: [
-      { name: "Wheels" },
-      { name: "Chasis" },
-      { name: "Bumper" },
-      { name: "Doorhandle" },
-      { name: "Headlight" },
-      { name: "Shadows" },
-      { name: "Taillight" },
-      { name: "Windows" },
+      { name: "wheels" },
+      { name: "chasis" },
+      { name: "bumper" },
+      { name: "doorhandle" },
+      { name: "headlight" },
+      { name: "shadows" },
+      { name: "taillight" },
+      { name: "windows" },
+    ],
+  },
+  {
+    growEditionSizeTo: 12,
+    layersOrder: [
+      { name: "wheels" },
+      { name: "chasis" },
+      { name: "antenna" },
+      { name: "bumper" },
+      { name: "doorhandle" },
+      { name: "headlight" },
+      { name: "shadows" },
+      { name: "taillight" },
+      { name: "windows" },
     ],
   },
 ];
 
-const shuffleLayerConfigurations = false;
+//Shuffles the creaton of the layer cfg, this prevents prediction of antenna while minting
+const shuffleLayerConfigurations = true;
 
 const debugLogs = false;
 
