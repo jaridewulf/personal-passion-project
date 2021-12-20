@@ -8,21 +8,21 @@
   "edition": 2,
   "attributes": [
     {
-      "horsepower": 70
+      "horsepower": 300
     },
     {
-      "topspeed": 126
+      "topspeed": 127
     },
     {
       "transmission": 5
     },
     {
       "trait_type": "wheels",
-      "value": "thin"
+      "value": "cross"
     },
     {
       "trait_type": "chasis",
-      "value": "blue"
+      "value": "orange"
     },
     {
       "trait_type": "bumper",

@@ -8,17 +8,17 @@
   "edition": 11,
   "attributes": [
     {
-      "horsepower": 214
+      "horsepower": 293
     },
     {
-      "topspeed": 185
+      "topspeed": 143
     },
     {
-      "transmission": 5
+      "transmission": 4
     },
     {
       "trait_type": "wheels",
-      "value": "fat"
+      "value": "hotrod"
     },
     {
       "trait_type": "chasis",
@@ -46,7 +46,7 @@
     },
     {
       "trait_type": "windows",
-      "value": "dark"
+      "value": "light"
     }
   ],
   "properties": {

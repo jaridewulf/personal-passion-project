@@ -8,21 +8,25 @@
   "edition": 4,
   "attributes": [
     {
-      "horsepower": 251
+      "horsepower": 253
     },
     {
-      "topspeed": 151
+      "topspeed": 63
     },
     {
-      "transmission": 4
+      "transmission": 5
     },
     {
       "trait_type": "wheels",
-      "value": "hotrod"
+      "value": "fat"
     },
     {
       "trait_type": "chasis",
       "value": "blue"
+    },
+    {
+      "trait_type": "antenna",
+      "value": "black"
     },
     {
       "trait_type": "bumper",
