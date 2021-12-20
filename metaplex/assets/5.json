@@ -1,0 +1,67 @@
+{
+  "name": "Old Skool Racers #5",
+  "symbol": "SOL-OSR",
+  "description": "Race your NFTs against your friends.",
+  "seller_fee_basis_points": 250,
+  "image": "image.png",
+  "external_url": "https://jaridewulf.be/",
+  "edition": 5,
+  "attributes": [
+    {
+      "horsepower": 236
+    },
+    {
+      "topspeed": 102
+    },
+    {
+      "transmission": 4
+    },
+    {
+      "trait_type": "wheels",
+      "value": "fat"
+    },
+    {
+      "trait_type": "chasis",
+      "value": "orange"
+    },
+    {
+      "trait_type": "bumper",
+      "value": "lightgray"
+    },
+    {
+      "trait_type": "doorhandle",
+      "value": "black"
+    },
+    {
+      "trait_type": "headlight",
+      "value": "bright_yellow"
+    },
+    {
+      "trait_type": "shadows",
+      "value": "dark"
+    },
+    {
+      "trait_type": "taillight",
+      "value": "bright_red"
+    },
+    {
+      "trait_type": "windows",
+      "value": "light"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "image.png",
+        "type": "image/png"
+      }
+    ],
+    "category": "image",
+    "creators": [
+      {
+        "address": "EL7DHqnXzKdMeB9kMho1h7d3ityRHPSBkgB5SQACXZSy",
+        "share": 100
+      }
+    ]
+  }
+}
