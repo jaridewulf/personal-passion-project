@@ -13,3 +13,18 @@ This project uses TypeScript. To install this just follow the [instalation guide
 
 ### Solana CLI
 For this project you will need to install the Solana CLI onto your computer. Solana has great docs in how to do this, [find out how](https://docs.solana.com/cli/install-solana-cli-tools).
+
+## Metaplex
+After providing the Metaplex program with my assets, I can prepare the minting. This is done by giving it all the correct info through the CLI. The commands needed for this are:
+
+```cli
+npx ts-node js/packages/cli/src/candy-machine-cli.ts upload ./assets --env devnet --keypair (PATH TO YOUR DEVNET FILE)
+```
+
+```CLI
+npx ts-node js/packages/cli/src/candy-machine-cli.ts create_candy_machine --env devnet --keypair (PATH TO YOUR DEVNET FILE)
+```
+
+```cli
+npx ts-node js/packages/cli/src/candy-machine-cli.ts update_candy_machine --keypair (PATH TO YOUR DEVNET FILE) --price (YOUR PRICE, FOR EXAMPLE: 1) --date (LAUNCH DATE, FOR EXAMPLE: "19 Dec 2021 00:00:00 EST")
+```
