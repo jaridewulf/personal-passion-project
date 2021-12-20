@@ -67,7 +67,7 @@ const format = {
 };
 
 const gif = {
-  export: true,
+  export: false,
   repeat: -1,
   quality: 100,
   delay: 500,

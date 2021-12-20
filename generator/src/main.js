@@ -275,7 +275,9 @@ const isDnaUnique = (_DnaList = new Set(), _dna = "") => {
 const createDna = (_layers) => {
   //Add aditional attributes
   attributesList = [];
-  attributesList.push({"horsepower": Math.floor(Math.random() * 10)});
+  attributesList.push({"horsepower": Math.floor(Math.random() * (300 - 60 + 1) + 60)});
+  attributesList.push({"topspeed": Math.floor(Math.random() * (300 - 60 + 1) + 60)});
+  attributesList.push({"transmission": Math.floor(Math.random() * (6 - 4 + 1) + 4)});
 
   let randNum = [];
   _layers.forEach((layer) => {
