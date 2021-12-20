@@ -10,12 +10,12 @@ const description = "Race your NFTs against your friends.";
 const baseUri = "ipfs://NewUriToReplace";
 
 const solanaMetadata = {
-  symbol: "YC",
-  seller_fee_basis_points: 1000, // Define how much % you want from secondary market sales 1000 = 10%
-  external_url: "https://www.youtube.com/c/hashlipsnft",
+  symbol: "SOL-OSR",
+  seller_fee_basis_points: 250, // Define how much % you want from secondary market sales 1000 = 10%
+  external_url: "https://jaridewulf.be/",
   creators: [
     {
-      address: "7fXNuer5sbZtaTEPhtJ5g5gNtuyRoKkvxdjEjEnPN4mC",
+      address: "EL7DHqnXzKdMeB9kMho1h7d3ityRHPSBkgB5SQACXZSy",
       share: 100,
     },
   ],
