@@ -1,17 +1,17 @@
 import { shortenAddress, royalty, pubkeyToString } from '@oyster/common';
 import React from 'react';
 import { Skeleton, Divider } from 'antd';
-import { useWallet } from '@solana/wallet-adapter-react';
 
 import { MetaAvatar } from '../../../../components/MetaAvatar';
 import { ArtContent } from '../../../../components/ArtContent';
 import { ViewOn } from '../../../../components/ViewOn';
 import { useArt } from '../../../../hooks';
 import { usePack } from '../../contexts/PackContext';
-import OpenPackButton from '../OpenPackButton';
+import { useWallet } from '@solana/wallet-adapter-react';
+import OpenPackButton from '../OpenPackButtom';
 
 interface IPropsPackSidebar {
-  onOpenPack: () => void;
+  onOpenPack: () => void,
 }
 
 const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
@@ -19,13 +19,9 @@ const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
 
   const metadataPubkey = voucherMetadataKey || '';
   const art = useArt(metadataPubkey);
-  const uri = pack?.info.uri;
   const { publicKey } = useWallet();
   const userWallet = pubkeyToString(publicKey);
   const isExhausted = provingProcess?.info.isExhausted;
-
-  const shouldEnableRedeem =
-    process.env.NEXT_ENABLE_NFT_PACKS_REDEEM === 'true';
 
   return (
     <div className="pack-view__sidebar">
@@ -37,16 +33,21 @@ const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
             <span className="item-name">
               {creator.name || shortenAddress(creator?.address || '')}
             </span>
-            {userWallet === creator.address && (
-              <div className="you-label">You</div>
-            )}
+            {
+              userWallet === creator.address &&
+              <div className="you-label">
+                You
+              </div>
+            }
           </div>
         ))}
       </div>
       <Divider className="divider" />
       <div className="pack-view__art-preview">
-        {uri && <ArtContent uri={uri} active allowMeshRender artView />}
-        {!uri && <Skeleton.Image />}
+        {metadataPubkey && (
+          <ArtContent pubkey={metadataPubkey} active allowMeshRender artView />
+        )}
+        {!metadataPubkey && <Skeleton.Image />}
       </div>
       <h4 className="pack-view__name">
         {pack?.info?.name || <Skeleton paragraph={{ rows: 1 }} />}
@@ -69,10 +70,10 @@ const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
         </div>
       </div>
       <Divider className="divider" />
-      {shouldEnableRedeem && !isExhausted && (
-        <OpenPackButton onClick={onOpenPack} />
-      )}
-      <Divider className="divider" />
+      {
+        !isExhausted && <OpenPackButton onClick={onOpenPack} />
+      }
+      <Divider className="divider"/>
       <div className="pack-view__description-block">
         <p className="pack-view__title">DETAILS</p>
         <p className="pack-view__text">
@@ -83,7 +84,7 @@ const PackSidebar = ({ onOpenPack }: IPropsPackSidebar) => {
         <div className="info-item">
           <ViewOn id={metadataPubkey} />
         </div>
-        <Divider className="divider" />
+        <Divider className="divider"/>
       </div>
     </div>
   );

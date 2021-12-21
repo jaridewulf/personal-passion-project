@@ -8,13 +8,16 @@
   "edition": 10,
   "attributes": [
     {
-      "horsepower": 83
+      "trait_type": "horsepower",
+      "value": 97
     },
     {
-      "topspeed": 259
+      "trait_type": "topspeed",
+      "value": 247
     },
     {
-      "transmission": 6
+      "trait_type": "transmission",
+      "value": 4
     },
     {
       "trait_type": "wheels",

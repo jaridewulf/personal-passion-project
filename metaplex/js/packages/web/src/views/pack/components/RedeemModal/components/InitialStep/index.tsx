@@ -3,14 +3,12 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 
 import RedeemCard from '../RedeemCard';
 import { PackMetadataByPackCard } from '../../../../contexts/hooks/useMetadataByPackCard';
-import SmallLoader from '../../../../../../components/SmallLoader';
 
 interface InitialStepProps {
   numberOfNFTs: number;
   numberOfAttempts: number;
   metadataByPackCard: PackMetadataByPackCard;
   creators: string[];
-  isLoadingMetadata: boolean;
   onClose: () => void;
 }
 
@@ -19,7 +17,6 @@ const InitialStep = ({
   numberOfAttempts,
   metadataByPackCard,
   creators,
-  isLoadingMetadata,
   onClose,
 }: InitialStepProps) => (
   <div>
@@ -39,10 +36,7 @@ const InitialStep = ({
 
       <div className="modal-redeem__cards">
         <p>POTENTIAL NFTs</p>
-        {isLoadingMetadata && <SmallLoader />}
-
-        {!isLoadingMetadata &&
-          metadataByPackCard &&
+        {metadataByPackCard &&
           Object.values(metadataByPackCard).map(
             item =>
               item && (

@@ -8,13 +8,16 @@
   "edition": 9,
   "attributes": [
     {
-      "horsepower": 147
+      "trait_type": "horsepower",
+      "value": 99
     },
     {
-      "topspeed": 247
+      "trait_type": "topspeed",
+      "value": 246
     },
     {
-      "transmission": 4
+      "trait_type": "transmission",
+      "value": 4
     },
     {
       "trait_type": "wheels",
@@ -22,7 +25,7 @@
     },
     {
       "trait_type": "chasis",
-      "value": "green"
+      "value": "blue"
     },
     {
       "trait_type": "bumper",
@@ -46,7 +49,7 @@
     },
     {
       "trait_type": "windows",
-      "value": "light"
+      "value": "dark"
     }
   ],
   "properties": {

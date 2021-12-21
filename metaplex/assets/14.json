@@ -8,17 +8,20 @@
   "edition": 14,
   "attributes": [
     {
-      "horsepower": 167
+      "trait_type": "horsepower",
+      "value": 144
     },
     {
-      "topspeed": 190
+      "trait_type": "topspeed",
+      "value": 179
     },
     {
-      "transmission": 6
+      "trait_type": "transmission",
+      "value": 6
     },
     {
       "trait_type": "wheels",
-      "value": "thin"
+      "value": "cross"
     },
     {
       "trait_type": "chasis",

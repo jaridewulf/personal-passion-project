@@ -117,27 +117,27 @@ programCommand('upload')
       batchSize,
     } = cmd.opts();
 
-    if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
-      throw new Error(
-        'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',
-      );
-    }
+    //if (storage === StorageType.ArweaveSol && env !== 'mainnet-beta') {
+    //  throw new Error(
+    //    'The arweave-sol storage option only works on mainnet. For devnet, please use either arweave, aws or ipfs\n',
+    //  );
+    //}
 
     if (storage === StorageType.ArweaveBundle && env !== 'mainnet-beta') {
       throw new Error(
-        'The arweave-bundle storage option only works on mainnet because it requires spending real AR tokens. For devnet, please set the --storage option to "aws" or "ipfs"\n',
+        'The arweave-bundl storage option only works on mainnet because it requires spending real AR tokens. For devnet, please set the --storage option to "aws" or "ipfs"\n',
       );
     }
 
     if (storage === StorageType.Arweave) {
       log.warn(
-        'WARNING: The "arweave" storage option will be going away soon. Please migrate to arweave-bundle or arweave-sol for mainnet.\n',
+        'WARNING: The "arweave" storage option will be going away soon. Please migrate to arweave-bundl or arweave-sol for mainnet.\n',
       );
     }
 
     if (storage === StorageType.ArweaveBundle && !arweaveJwk) {
       throw new Error(
-        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundle',
+        'Path to Arweave JWK wallet file (--arweave-jwk) must be provided when using arweave-bundl',
       );
     }
 
@@ -347,19 +347,14 @@ programCommand('verify_token_metadata')
     const { number } = cmd.opts();
 
     const startMs = Date.now();
-    log.info(
-      `\n==> Starting verification: ${
-        new Date(startMs).toString().split(' G')[0]
-      }`,
-    );
+    log.info('started at: ' + startMs.toString());
     verifyTokenMetadata({ files, uploadElementsCount: number });
 
     const endMs = Date.now();
     const timeTaken = new Date(endMs - startMs).toISOString().substr(11, 8);
     log.info(
-      `==> Verification ended: ${new Date(endMs).toString().split(' G')[0]}`,
+      `ended at: ${new Date(endMs).toString()}. time taken: ${timeTaken}`,
     );
-    log.info(`Elapsed time: ${timeTaken}\n`);
   });
 
 programCommand('verify')

@@ -2,8 +2,6 @@ import React, { memo, ReactElement } from 'react';
 import classNames from 'classnames';
 
 import { ArtContent } from '../../../../components/ArtContent';
-import { useExtendedArt } from '../../../../hooks';
-
 import { ItemRowProps } from './interface';
 
 const ItemRow = ({
@@ -15,9 +13,7 @@ const ItemRow = ({
 }: ItemRowProps): ReactElement => {
   const { metadata, masterEdition } = item;
   const { pubkey } = metadata;
-  const { name } = metadata?.info?.data;
-
-  const { ref, data } = useExtendedArt(pubkey);
+  const { name, uri } = metadata?.info?.data;
 
   const maximumSupply: string =
     masterEdition?.info.maxSupply?.toString() || 'Unlimited';
@@ -29,10 +25,10 @@ const ItemRow = ({
   });
 
   return (
-    <div className={itemRowCls} onClick={onClick} ref={ref}>
+    <div className={itemRowCls} onClick={onClick}>
       {children}
       <div className="preview-column">
-        <ArtContent uri={data?.image} preview={false} />
+        <ArtContent pubkey={pubkey} uri={uri} preview={false} />
       </div>
       <div className="name-column">
         <p className="name-column__name">{name}</p>

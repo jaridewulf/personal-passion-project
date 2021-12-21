@@ -5,6 +5,7 @@ import {
   useMeta,
 } from '@oyster/common';
 import { BN } from 'bn.js';
+import { useMemo } from 'react';
 
 type MetadataWithProbability = ParsedAccount<Metadata> & {
   probability: string;
@@ -24,27 +25,27 @@ export const useMetadataByPackCard = (
   const isMaxSupplyDistribution =
     distributionType === PackDistributionType.MaxSupply;
   const total = isMaxSupplyDistribution ? totalEditions : totalWeight;
+
   const cards = packCardsByPackSet[packId];
-
-  const metadata = cards?.reduce<PackMetadataByPackCard>(
-    (packMetadata, { info, pubkey }) => {
-      const probCount = isMaxSupplyDistribution ? info.maxSupply : info.weight;
-      const probability = calculateProbability(
-        probCount,
-        total.toNumber(),
-      ).toFixed(1);
-
-      if (!metadataByMasterEdition[info.master]) {
-        return packMetadata;
-      }
-
-      packMetadata[pubkey] = {
-        ...metadataByMasterEdition[info.master],
-        probability,
-      };
-      return packMetadata;
-    },
-    {},
+  const metadata = useMemo(
+    () =>
+      cards?.reduce<PackMetadataByPackCard>(
+        (packMetadata, { info, pubkey }) => {
+          const probCount = isMaxSupplyDistribution
+            ? info.maxSupply
+            : info.weight;
+          packMetadata[pubkey] = {
+            ...metadataByMasterEdition[info.master],
+            probability: calculateProbability(
+              probCount,
+              total.toNumber(),
+            ).toFixed(1),
+          };
+          return packMetadata;
+        },
+        {},
+      ),
+    [cards, metadataByMasterEdition],
   );
 
   return metadata;

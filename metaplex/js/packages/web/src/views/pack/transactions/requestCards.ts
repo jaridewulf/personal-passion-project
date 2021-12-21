@@ -1,5 +1,6 @@
 import {
-  sendTransactionsWithRecentBlock,
+  sendTransactions,
+  SequenceType,
   toPublicKey,
   requestCardToRedeem,
   cleanUp,
@@ -7,7 +8,7 @@ import {
 } from '@oyster/common';
 
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { Keypair, TransactionInstruction } from '@solana/web3.js';
+import { TransactionInstruction } from '@solana/web3.js';
 
 import {
   RequestCardsParams,
@@ -18,23 +19,28 @@ import {
 const REQUEST_CARDS_CHUNK_SIZE = 46;
 
 export const requestCards = async ({
+  userVouchers,
   pack,
+  voucherEditionKey,
   tokenAccount,
   connection,
   wallet,
   cardsLeftToOpen,
-  voucherKey,
-  editionKey,
-  editionMint,
 }: RequestCardsParams): Promise<number> => {
   if (!wallet.publicKey) throw new WalletNotConnectedError();
 
+  const {
+    pubkey: packVoucher,
+    edition,
+    mint: editionMint,
+  } = userVouchers[voucherEditionKey];
+
   const requestCardsInstructions = await getRequestCardsInstructions({
     cardsLeftToOpen,
-    editionKey,
+    edition,
     editionMint,
     tokenAccount,
-    voucherKey,
+    packVoucher,
     wallet,
     packSetKey: pack.pubkey,
     randomOracle: pack.info.randomOracle,
@@ -44,29 +50,28 @@ export const requestCards = async ({
     requestCardsInstructions.flat(),
     REQUEST_CARDS_CHUNK_SIZE,
   );
-  const requestCardsInstructionsSigners: Keypair[][] =
-    requestCardsInstructionsChunks.map(() => []);
+  const requestCardsInstructionsSigners = requestCardsInstructionsChunks.map(
+    () => [],
+  );
 
-  return sendTransactionsWithRecentBlock(
+  return sendTransactions(
     connection,
     wallet,
     requestCardsInstructionsChunks,
     requestCardsInstructionsSigners,
+    SequenceType.Sequential,
   );
 };
 
 const getRequestCardsInstructions = async ({
   cardsLeftToOpen,
-  tokenAccount,
   ...params
 }: RequestCardsInstructionsParams): Promise<TransactionInstruction[][]> => {
-  const addCardsToPack = Array.from({ length: cardsLeftToOpen }).map(
-    (_, index) =>
-      generateRequestCardInstructions({
-        index: 1, // voucher index, currently we have only one
-        ...params,
-        ...(index === 0 ? { tokenAccount } : {}), // add token acc only for first instruction
-      }),
+  const addCardsToPack = Array.from({ length: cardsLeftToOpen }).map(() =>
+    generateRequestCardInstructions({
+      index: 1, // voucher index, currently we have only one
+      ...params,
+    }),
   );
 
   return Promise.all(addCardsToPack);

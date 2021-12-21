@@ -29,8 +29,7 @@ const RedeemCard = ({
         </div>
       </div>
       <div className="card-redeem__percentage">
-        <p className="percentage-desktop">{`${probability}% chance`}</p>
-        <p className="percentage-mobile">{`${probability}%`}</p>
+        <p>{`${probability}% `}<p>chance</p></p>
       </div>
     </div>
   );

@@ -11,53 +11,38 @@ interface IAuctionItemCard {
   onClose?: () => void;
 }
 
-const AuctionItemCard = ({
-  current,
-  isSelected,
-  onSelect,
-  onClose,
-}: IAuctionItemCard) => {
+const AuctionItemCard = ({ current, isSelected, onSelect, onClose }: IAuctionItemCard) => {
   const { packs, vouchers } = useMeta();
   const shouldShowPacks = process.env.NEXT_ENABLE_NFT_PACKS === 'true';
-
   if (shouldShowPacks) {
-    const parent = current.edition?.info?.parent;
-    const voucher = Object.values(vouchers).find(
-      v => v?.info?.master === parent,
-    );
-
+    const masterEdition = current.masterEdition?.pubkey;
+    const voucher = Object.values(vouchers).find(v => v?.info?.master === masterEdition);
     if (voucher) {
+      const pack = packs[voucher.info.packSet];
       const {
-        info: { authority, allowedAmountToRedeem, name, uri },
-      } = packs[voucher.info.packSet];
-
+        info: {authority, allowedAmountToRedeem, name},
+      } = pack;
       return (
         // use <div> for correct grid rendering
         <div onClick={onSelect}>
           <PackCard
             name={name}
-            voucherMetadata={current.metadata.pubkey}
-            uri={uri}
+            voucherMetadata={voucher.info.metadata}
             authority={authority}
             allowedAmountToRedeem={allowedAmountToRedeem}
             onClose={onClose}
             artView
           />
         </div>
-      );
+      )
     }
   }
-
   return (
     <ArtCard
       pubkey={current.metadata.pubkey}
       preview={false}
       onClick={onSelect}
-      className={
-        isSelected
-          ? 'selected-card art-card-for-selector'
-          : 'not-selected-card art-card-for-selector'
-      }
+      className={isSelected ? 'selected-card art-card-for-selector' : 'not-selected-card art-card-for-selector'}
       onClose={onClose}
     />
   );

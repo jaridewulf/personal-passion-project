@@ -8,10 +8,12 @@ import {
   Slider,
   Snackbar,
 } from '@material-ui/core';
+import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import { createStyles, Theme } from '@material-ui/core/styles';
+import { PhaseCountdown } from './countdown';
 import Dialog from '@material-ui/core/Dialog';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
@@ -21,7 +23,7 @@ import Alert from '@material-ui/lab/Alert';
 
 import * as anchor from '@project-serum/anchor';
 
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
@@ -29,7 +31,6 @@ import { WalletDialogButton } from '@solana/wallet-adapter-material-ui';
 import {
   awaitTransactionSignatureConfirmation,
   CandyMachineAccount,
-  CANDY_MACHINE_PROGRAM,
   getCandyMachineState,
   mintOneToken,
 } from './candy-machine';
@@ -39,13 +40,11 @@ import {
   getFairLaunchState,
   punchTicket,
   purchaseTicket,
+  receiveRefund,
 } from './fair-launch';
 
-import { AlertState, formatNumber, getAtaForMint, toDate } from './utils';
-import { CTAButton, MintButton } from './MintButton';
-import { AntiRug } from './AntiRug';
-import { getPhase, Phase, PhaseHeader } from './PhaseHeader';
-import { GatewayProvider } from '@civic/solana-gateway-react';
+import { formatNumber, getAtaForMint, toDate } from './utils';
+import Countdown from 'react-countdown';
 
 const ConnectButton = styled(WalletDialogButton)`
   width: 100%;
@@ -59,6 +58,17 @@ const ConnectButton = styled(WalletDialogButton)`
 `;
 
 const MintContainer = styled.div``; // add your styles here
+
+const MintButton = styled(Button)`
+  width: 100%;
+  height: 60px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+`; // add your styles here
 
 const dialogStyles: any = (theme: Theme) =>
   createStyles({
@@ -110,13 +120,84 @@ const ValueSlider = styled(Slider)({
   },
 });
 
+enum Phase {
+  Phase0,
+  Phase1,
+  Phase2,
+  Lottery,
+  Phase3,
+  Phase4,
+  Unknown,
+}
+
+const Header = (props: {
+  phaseName: string;
+  desc: string;
+  date: anchor.BN | undefined;
+  status?: string;
+}) => {
+  const { phaseName, desc, date, status } = props;
+  return (
+    <Grid container justifyContent="center">
+      <Grid xs={6} justifyContent="center" direction="column">
+        <Typography variant="h5" style={{ fontWeight: 600 }}>
+          {phaseName}
+        </Typography>
+        <Typography variant="body1" color="textSecondary">
+          {desc}
+        </Typography>
+      </Grid>
+      <Grid xs={6} container justifyContent="flex-end">
+        <PhaseCountdown
+          date={toDate(date)}
+          style={{ justifyContent: 'flex-end' }}
+          status={status || 'COMPLETE'}
+        />
+      </Grid>
+    </Grid>
+  );
+};
+
+function getPhase(
+  fairLaunch: FairLaunchAccount | undefined,
+  candyMachine: CandyMachineAccount | undefined,
+): Phase {
+  const curr = new Date().getTime();
+
+  const phaseOne = toDate(fairLaunch?.state.data.phaseOneStart)?.getTime();
+  const phaseOneEnd = toDate(fairLaunch?.state.data.phaseOneEnd)?.getTime();
+  const phaseTwoEnd = toDate(fairLaunch?.state.data.phaseTwoEnd)?.getTime();
+  const candyMachineGoLive = toDate(candyMachine?.state.goLiveDate)?.getTime();
+  if (phaseOne && curr < phaseOne) {
+    return Phase.Phase0;
+  } else if (phaseOneEnd && curr <= phaseOneEnd) {
+    return Phase.Phase1;
+  } else if (phaseTwoEnd && curr <= phaseTwoEnd) {
+    return Phase.Phase2;
+  } else if (
+    !fairLaunch?.state.phaseThreeStarted &&
+    phaseTwoEnd &&
+    curr > phaseTwoEnd
+  ) {
+    return Phase.Lottery;
+  } else if (
+    fairLaunch?.state.phaseThreeStarted &&
+    candyMachineGoLive &&
+    curr > candyMachineGoLive
+  ) {
+    return Phase.Phase4;
+  } else if (fairLaunch?.state.phaseThreeStarted) {
+    return Phase.Phase3;
+  }
+  return Phase.Unknown;
+}
+
 export interface HomeProps {
   candyMachineId?: anchor.web3.PublicKey;
-  fairLaunchId?: anchor.web3.PublicKey;
+  fairLaunchId: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
   startDate: number;
   txTimeout: number;
-  rpcHost: string;
 }
 
 const FAIR_LAUNCH_LOTTERY_SIZE =
@@ -150,7 +231,6 @@ const isWinner = (fairLaunch: FairLaunchAccount | undefined): boolean => {
 const Home = (props: HomeProps) => {
   const [fairLaunchBalance, setFairLaunchBalance] = useState<number>(0);
   const [yourSOLBalance, setYourSOLBalance] = useState<number | null>(null);
-  const rpcUrl = props.rpcHost;
 
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
   const [contributed, setContributed] = useState(0);
@@ -184,30 +264,25 @@ const Home = (props: HomeProps) => {
   const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
   const [howToOpen, setHowToOpen] = useState(false);
   const [refundExplainerOpen, setRefundExplainerOpen] = useState(false);
+  const [antiRugPolicyOpen, setAnitRugPolicyOpen] = useState(false);
 
   const onMint = async () => {
     try {
       setIsMinting(true);
-      document.getElementById('#identity')?.click();
       if (wallet.connected && candyMachine?.program && wallet.publicKey) {
         if (fairLaunch?.ticket.data?.state.unpunched && isWinner(fairLaunch)) {
           await onPunchTicket();
         }
 
-        const mintTxId = (
-          await mintOneToken(candyMachine, wallet.publicKey)
-        )[0];
+        const mintTxId = await mintOneToken(candyMachine, wallet.publicKey);
 
-        let status: any = { err: true };
-        if (mintTxId) {
-          status = await awaitTransactionSignatureConfirmation(
-            mintTxId,
-            props.txTimeout,
-            props.connection,
-            'singleGossip',
-            true,
-          );
-        }
+        const status = await awaitTransactionSignatureConfirmation(
+          mintTxId,
+          props.txTimeout,
+          props.connection,
+          'singleGossip',
+          false,
+        );
 
         if (!status?.err) {
           setAlertState({
@@ -266,60 +341,56 @@ const Home = (props: HomeProps) => {
         );
         setYourSOLBalance(balance);
 
-        if (props.fairLaunchId) {
-          const state = await getFairLaunchState(
-            anchorWallet,
-            props.fairLaunchId,
-            props.connection,
-          );
+        const state = await getFairLaunchState(
+          anchorWallet,
+          props.fairLaunchId,
+          props.connection,
+        );
 
-          setFairLaunch(state);
+        setFairLaunch(state);
 
-          try {
-            if (state.state.tokenMint) {
-              const fairLaunchBalance =
-                await props.connection.getTokenAccountBalance(
-                  (
-                    await getAtaForMint(
-                      state.state.tokenMint,
-                      anchorWallet.publicKey,
-                    )
-                  )[0],
-                );
-
-              if (fairLaunchBalance.value) {
-                setFairLaunchBalance(fairLaunchBalance.value.uiAmount || 0);
-              }
-            }
-          } catch (e) {
-            console.log('Problem getting fair launch token balance');
-            console.log(e);
-          }
-          if (contributed === 0) {
-            const phase = getPhase(state, undefined);
-
-            if (phase === Phase.SetPrice) {
-              const ticks =
-                (state.state.data.priceRangeEnd.toNumber() -
-                  state.state.data.priceRangeStart.toNumber()) /
-                state.state.data.tickSize.toNumber();
-              const randomTick = Math.round(Math.random() * ticks);
-
-              setContributed(
-                (state.state.data.priceRangeStart.toNumber() +
-                  randomTick * state.state.data.tickSize.toNumber()) /
-                  LAMPORTS_PER_SOL,
-              );
-            } else {
-              setContributed(
+        try {
+          if (state.state.tokenMint) {
+            const fairLaunchBalance =
+              await props.connection.getTokenAccountBalance(
                 (
-                  state.state.currentMedian || state.state.data.priceRangeStart
-                ).toNumber() / LAMPORTS_PER_SOL,
+                  await getAtaForMint(
+                    state.state.tokenMint,
+                    anchorWallet.publicKey,
+                  )
+                )[0],
               );
+
+            if (fairLaunchBalance.value) {
+              setFairLaunchBalance(fairLaunchBalance.value.uiAmount || 0);
             }
           }
-        } else {
-          console.log('No fair launch detected in configuration.');
+        } catch (e) {
+          console.log('Problem getting fair launch token balance');
+          console.log(e);
+        }
+        if (contributed === 0) {
+          const phase = getPhase(state, undefined);
+
+          if (phase === Phase.Phase1) {
+            const ticks =
+              (state.state.data.priceRangeEnd.toNumber() -
+                state.state.data.priceRangeStart.toNumber()) /
+              state.state.data.tickSize.toNumber();
+            const randomTick = Math.round(Math.random() * ticks);
+
+            setContributed(
+              (state.state.data.priceRangeStart.toNumber() +
+                randomTick * state.state.data.tickSize.toNumber()) /
+                LAMPORTS_PER_SOL,
+            );
+          } else {
+            setContributed(
+              (
+                state.state.currentMedian || state.state.data.priceRangeStart
+              ).toNumber() / LAMPORTS_PER_SOL,
+            );
+          }
         }
       } catch (e) {
         console.log('Problem getting fair launch state');
@@ -361,7 +432,7 @@ const Home = (props: HomeProps) => {
       label: `${min} SOL`,
     },
     // TODO:L
-    ...(phase === Phase.SetPrice
+    ...(phase === Phase.Phase1
       ? []
       : [
           {
@@ -395,6 +466,32 @@ const Home = (props: HomeProps) => {
         message: `Congratulations! Bid ${
           fairLaunch?.ticket.data ? 'updated' : 'inserted'
         }!`,
+        severity: 'success',
+      });
+    } catch (e) {
+      console.log(e);
+      setIsMinting(false);
+      setAlertState({
+        open: true,
+        message: 'Something went wrong.',
+        severity: 'error',
+      });
+    }
+  };
+  const onRugRefund = async () => {
+    if (!anchorWallet) {
+      return;
+    }
+
+    console.log('refund');
+    try {
+      setIsMinting(true);
+      await receiveRefund(anchorWallet, fairLaunch);
+      setIsMinting(false);
+      setAlertState({
+        open: true,
+        message:
+          'Congratulations! You have received a refund. This is an irreversible action.',
         severity: 'success',
       });
     } catch (e) {
@@ -477,25 +574,100 @@ const Home = (props: HomeProps) => {
 
   return (
     <Container style={{ marginTop: 100 }}>
-      {fairLaunch && (
-        <AntiRug
-          fairLaunch={fairLaunch}
-          isMinting={[isMinting, setIsMinting]}
-          setAlertState={setAlertState}
-        />
-      )}
+      <Container maxWidth="xs" style={{ position: 'relative' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <Link
+            component="button"
+            variant="body2"
+            color="textSecondary"
+            align="right"
+            onClick={() => {
+              setAnitRugPolicyOpen(true);
+            }}
+          >
+            Anti-Rug Policy
+          </Link>
+        </div>
+      </Container>
       <Container maxWidth="xs" style={{ position: 'relative' }}>
         <Paper
           style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
         >
           <Grid container justifyContent="center" direction="column">
-            <PhaseHeader
-              phase={phase}
-              fairLaunch={fairLaunch}
-              candyMachine={candyMachine}
-              rpcUrl={rpcUrl}
-              candyMachinePredatesFairLaunch={!!candyMachinePredatesFairLaunch}
-            />
+            {phase === Phase.Phase0 && (
+              <Header
+                phaseName={'Phase 0'}
+                desc={'Anticipation Phase'}
+                date={fairLaunch?.state.data.phaseOneStart}
+              />
+            )}
+            {phase === Phase.Phase1 && (
+              <Header
+                phaseName={'Phase 1'}
+                desc={'Set price phase'}
+                date={fairLaunch?.state.data.phaseOneEnd}
+              />
+            )}
+
+            {phase === Phase.Phase2 && (
+              <Header
+                phaseName={'Phase 2'}
+                desc={'Grace period'}
+                date={fairLaunch?.state.data.phaseTwoEnd}
+              />
+            )}
+
+            {phase === Phase.Lottery && (
+              <Header
+                phaseName={'Phase 3'}
+                desc={'Raffle in progress'}
+                date={fairLaunch?.state.data.phaseTwoEnd.add(
+                  fairLaunch?.state.data.lotteryDuration,
+                )}
+              />
+            )}
+
+            {phase === Phase.Phase3 && !candyMachine && (
+              <Header
+                phaseName={'Phase 3'}
+                desc={'Raffle finished!'}
+                date={fairLaunch?.state.data.phaseTwoEnd}
+              />
+            )}
+
+            {phase === Phase.Phase3 && candyMachine && (
+              <Header
+                phaseName={'Phase 3'}
+                desc={'Minting starts in...'}
+                date={candyMachine?.state.goLiveDate}
+              />
+            )}
+
+            {phase === Phase.Unknown && !candyMachine && (
+              <Header
+                phaseName={'Loading...'}
+                desc={'Waiting for you to connect your wallet.'}
+                date={undefined}
+              />
+            )}
+
+            {phase === Phase.Phase4 && (
+              <Header
+                phaseName={
+                  candyMachinePredatesFairLaunch ? 'Phase 3' : 'Phase 4'
+                }
+                desc={'Candy Time 🍬 🍬 🍬'}
+                date={candyMachine?.state.goLiveDate}
+                status="LIVE"
+              />
+            )}
+
             {fairLaunch && (
               <Grid
                 container
@@ -521,9 +693,7 @@ const Home = (props: HomeProps) => {
                       SOL
                     </Typography>
                   </>
-                ) : [Phase.AnticipationPhase, Phase.SetPrice].includes(
-                    phase,
-                  ) ? (
+                ) : [Phase.Phase0, Phase.Phase1].includes(phase) ? (
                   <Typography>
                     You haven't entered this raffle yet. <br />
                     {fairLaunch?.state?.data?.fee && (
@@ -548,9 +718,9 @@ const Home = (props: HomeProps) => {
             {fairLaunch && (
               <>
                 {[
-                  Phase.SetPrice,
-                  Phase.GracePeriod,
-                  Phase.RaffleFinished,
+                  Phase.Phase1,
+                  Phase.Phase2,
+                  Phase.Phase3,
                   Phase.Lottery,
                 ].includes(phase) &&
                   fairLaunch?.ticket?.data?.state.withdrawn && (
@@ -561,7 +731,7 @@ const Home = (props: HomeProps) => {
                       </Alert>
                     </div>
                   )}
-                {[Phase.GracePeriod].includes(phase) &&
+                {[Phase.Phase2].includes(phase) &&
                   fairLaunch.state.currentMedian &&
                   fairLaunch?.ticket?.data?.amount &&
                   !fairLaunch?.ticket?.data?.state.withdrawn &&
@@ -575,7 +745,7 @@ const Home = (props: HomeProps) => {
                       </Alert>
                     </div>
                   )}
-                {[Phase.RaffleFinished, Phase.Lottery].includes(phase) &&
+                {[Phase.Phase3, Phase.Lottery].includes(phase) &&
                   fairLaunch.state.currentMedian &&
                   fairLaunch?.ticket?.data?.amount &&
                   !fairLaunch?.ticket?.data?.state.withdrawn &&
@@ -600,7 +770,7 @@ const Home = (props: HomeProps) => {
               </>
             )}
 
-            {[Phase.SetPrice, Phase.GracePeriod].includes(phase) && (
+            {[Phase.Phase1, Phase.Phase2].includes(phase) && (
               <>
                 <Grid style={{ marginTop: 40, marginBottom: 20 }}>
                   {contributed > 0 ? (
@@ -636,19 +806,18 @@ const Home = (props: HomeProps) => {
             {!wallet.connected ? (
               <ConnectButton>
                 Connect{' '}
-                {[Phase.SetPrice].includes(phase) ? 'to bid' : 'to see status'}
+                {[Phase.Phase1].includes(phase) ? 'to bid' : 'to see status'}
               </ConnectButton>
             ) : (
               <div>
-                {[Phase.SetPrice, Phase.GracePeriod].includes(phase) && (
+                {[Phase.Phase1, Phase.Phase2].includes(phase) && (
                   <>
-                    <CTAButton
+                    <MintButton
                       onClick={onDeposit}
                       variant="contained"
                       disabled={
                         isMinting ||
-                        (!fairLaunch?.ticket.data &&
-                          phase === Phase.GracePeriod) ||
+                        (!fairLaunch?.ticket.data && phase === Phase.Phase2) ||
                         notEnoughSOL
                       }
                     >
@@ -660,14 +829,14 @@ const Home = (props: HomeProps) => {
                         'Change bid'
                       )}
                       {}
-                    </CTAButton>
+                    </MintButton>
                   </>
                 )}
 
-                {[Phase.RaffleFinished].includes(phase) && (
+                {[Phase.Phase3].includes(phase) && (
                   <>
                     {isWinner(fairLaunch) && (
-                      <CTAButton
+                      <MintButton
                         onClick={onPunchTicket}
                         variant="contained"
                         disabled={
@@ -675,11 +844,11 @@ const Home = (props: HomeProps) => {
                         }
                       >
                         {isMinting ? <CircularProgress /> : 'Punch Ticket'}
-                      </CTAButton>
+                      </MintButton>
                     )}
 
                     {!isWinner(fairLaunch) && (
-                      <CTAButton
+                      <MintButton
                         onClick={onRefundTicket}
                         variant="contained"
                         disabled={
@@ -689,7 +858,7 @@ const Home = (props: HomeProps) => {
                         }
                       >
                         {isMinting ? <CircularProgress /> : 'Withdraw'}
-                      </CTAButton>
+                      </MintButton>
                     )}
                   </>
                 )}
@@ -700,53 +869,33 @@ const Home = (props: HomeProps) => {
                       isWinner(fairLaunch) ||
                       fairLaunchBalance > 0) && (
                       <MintContainer>
-                        {candyMachine?.state.isActive &&
-                        candyMachine?.state.gatekeeper &&
-                        wallet.publicKey &&
-                        wallet.signTransaction ? (
-                          <GatewayProvider
-                            wallet={{
-                              publicKey:
-                                wallet.publicKey ||
-                                new PublicKey(CANDY_MACHINE_PROGRAM),
-                              //@ts-ignore
-                              signTransaction: wallet.signTransaction,
-                            }}
-                            // // Replace with following when added
-                            // gatekeeperNetwork={candyMachine.state.gatekeeper_network}
-                            gatekeeperNetwork={
-                              candyMachine?.state?.gatekeeper?.gatekeeperNetwork
-                            } // This is the ignite (captcha) network
-                            /// Don't need this for mainnet
-                            clusterUrl={rpcUrl}
-                            options={{ autoShowModal: false }}
-                          >
-                            <MintButton
-                              candyMachine={candyMachine}
-                              fairLaunch={fairLaunch}
-                              isMinting={isMinting}
-                              fairLaunchBalance={fairLaunchBalance}
-                              onMint={onMint}
-                            />
-                          </GatewayProvider>
-                        ) : (
-                          <MintButton
-                            candyMachine={candyMachine}
-                            fairLaunch={fairLaunch}
-                            isMinting={isMinting}
-                            fairLaunchBalance={fairLaunchBalance}
-                            onMint={onMint}
-                          />
-                        )}
+                        <MintButton
+                          disabled={
+                            candyMachine?.state.isSoldOut ||
+                            isMinting ||
+                            !candyMachine?.state.isActive ||
+                            (fairLaunch?.ticket?.data?.state.punched &&
+                              fairLaunchBalance === 0)
+                          }
+                          onClick={onMint}
+                          variant="contained"
+                        >
+                          {fairLaunch?.ticket?.data?.state.punched &&
+                          fairLaunchBalance === 0 ? (
+                            'MINTED'
+                          ) : candyMachine?.state.isSoldOut ? (
+                            'SOLD OUT'
+                          ) : isMinting ? (
+                            <CircularProgress />
+                          ) : (
+                            'MINT'
+                          )}
+                        </MintButton>
                       </MintContainer>
                     )}
 
-                    {!(
-                      !fairLaunch ||
-                      isWinner(fairLaunch) ||
-                      fairLaunchBalance > 0
-                    ) && (
-                      <CTAButton
+                    {!isWinner(fairLaunch) && (
+                      <MintButton
                         onClick={onRefundTicket}
                         variant="contained"
                         disabled={
@@ -756,7 +905,7 @@ const Home = (props: HomeProps) => {
                         }
                       >
                         {isMinting ? <CircularProgress /> : 'Withdraw'}
-                      </CTAButton>
+                      </MintButton>
                     )}
                   </>
                 )}
@@ -768,19 +917,17 @@ const Home = (props: HomeProps) => {
               justifyContent="space-between"
               color="textSecondary"
             >
-              {fairLaunch && (
-                <Link
-                  component="button"
-                  variant="body2"
-                  color="textSecondary"
-                  align="left"
-                  onClick={() => {
-                    setHowToOpen(true);
-                  }}
-                >
-                  How this raffle works
-                </Link>
-              )}
+              <Link
+                component="button"
+                variant="body2"
+                color="textSecondary"
+                align="left"
+                onClick={() => {
+                  setHowToOpen(true);
+                }}
+              >
+                How this raffle works
+              </Link>
               {fairLaunch?.ticket.data && (
                 <Link
                   component="button"
@@ -815,6 +962,97 @@ const Home = (props: HomeProps) => {
                 During raffle phases, or if you are a winner, or if this website
                 is not configured to be a fair launch but simply a candy
                 machine, refunds are disallowed.
+              </MuiDialogContent>
+            </Dialog>
+            <Dialog
+              open={antiRugPolicyOpen}
+              onClose={() => {
+                setAnitRugPolicyOpen(false);
+              }}
+              PaperProps={{
+                style: { backgroundColor: '#222933', borderRadius: 6 },
+              }}
+            >
+              <MuiDialogContent style={{ padding: 24 }}>
+                {!fairLaunch?.state.data.antiRugSetting && (
+                  <span>This Fair Launch has no anti-rug settings.</span>
+                )}
+                {fairLaunch?.state.data.antiRugSetting &&
+                  fairLaunch.state.data.antiRugSetting.selfDestructDate && (
+                    <div>
+                      <h3>Anti-Rug Policy</h3>
+                      <p>
+                        This raffle is governed by a smart contract to prevent
+                        the artist from running away with your money.
+                      </p>
+                      <p>How it works:</p>
+                      This project will retain{' '}
+                      {fairLaunch.state.data.antiRugSetting.reserveBp / 100}% (◎{' '}
+                      {(fairLaunch?.treasury *
+                        fairLaunch.state.data.antiRugSetting.reserveBp) /
+                        (LAMPORTS_PER_SOL * 10000)}
+                      ) of the pledged amount in a locked state until all but{' '}
+                      {fairLaunch.state.data.antiRugSetting.tokenRequirement.toNumber()}{' '}
+                      NFTs (out of up to{' '}
+                      {fairLaunch.state.data.numberOfTokens.toNumber()}) have
+                      been minted.
+                      <p>
+                        If more than{' '}
+                        {fairLaunch.state.data.antiRugSetting.tokenRequirement.toNumber()}{' '}
+                        NFTs remain as of{' '}
+                        {toDate(
+                          fairLaunch.state.data.antiRugSetting.selfDestructDate,
+                        )?.toLocaleDateString()}{' '}
+                        at{' '}
+                        {toDate(
+                          fairLaunch.state.data.antiRugSetting.selfDestructDate,
+                        )?.toLocaleTimeString()}
+                        , you will have the option to get a refund of{' '}
+                        {fairLaunch.state.data.antiRugSetting.reserveBp / 100}%
+                        of the cost of your token.
+                      </p>
+                      {fairLaunch?.ticket?.data &&
+                        !fairLaunch?.ticket?.data.state.withdrawn && (
+                          <MintButton
+                            onClick={onRugRefund}
+                            variant="contained"
+                            disabled={
+                              !!!fairLaunch.ticket.data ||
+                              !fairLaunch.ticket.data.state.punched ||
+                              Date.now() / 1000 <
+                                fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber()
+                            }
+                          >
+                            {isMinting ? (
+                              <CircularProgress />
+                            ) : Date.now() / 1000 <
+                              fairLaunch.state.data.antiRugSetting.selfDestructDate.toNumber() ? (
+                              <span>
+                                Refund in...
+                                <Countdown
+                                  date={toDate(
+                                    fairLaunch.state.data.antiRugSetting
+                                      .selfDestructDate,
+                                  )}
+                                />
+                              </span>
+                            ) : (
+                              'Refund'
+                            )}
+                            {}
+                          </MintButton>
+                        )}
+                      <div style={{ textAlign: 'center', marginTop: '-5px' }}>
+                        {fairLaunch?.ticket?.data &&
+                          !fairLaunch?.ticket?.data?.state.punched && (
+                            <small>
+                              You currently have a ticket but it has not been
+                              punched yet, so cannot be refunded.
+                            </small>
+                          )}
+                      </div>
+                    </div>
+                  )}
               </MuiDialogContent>
             </Dialog>
             <Dialog
@@ -960,7 +1198,7 @@ const Home = (props: HomeProps) => {
                   style={{ fontWeight: 'bold' }}
                 >
                   ◎{' '}
-                  {phase === Phase.AnticipationPhase || phase === Phase.SetPrice
+                  {phase === Phase.Phase0 || phase === Phase.Phase1
                     ? '???'
                     : formatNumber.format(median)}
                 </Typography>
@@ -999,5 +1237,11 @@ const Home = (props: HomeProps) => {
     </Container>
   );
 };
+
+interface AlertState {
+  open: boolean;
+  message: string;
+  severity: 'success' | 'info' | 'warning' | 'error' | undefined;
+}
 
 export default Home;

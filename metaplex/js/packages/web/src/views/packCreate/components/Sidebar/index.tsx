@@ -1,6 +1,6 @@
 import React from 'react-dom';
 import { memo } from 'react';
-import { Steps, Button, Spin } from 'antd';
+import { Steps, Button } from 'antd';
 import { useMeta } from '@oyster/common';
 import { useWallet } from '@solana/wallet-adapter-react';
 
@@ -12,20 +12,13 @@ import { SidebarProps } from './interface';
 
 const { Step } = Steps;
 
-const Sidebar = ({
-  step,
-  setStep,
-  submit,
-  isValidStep,
-  buttonLoading,
-}: SidebarProps) => {
+const Sidebar = ({ step, setStep, submit, isValidStep }: SidebarProps) => {
   const { connected } = useWallet();
   const { isLoading } = useMeta();
   const { width } = useWindowDimensions();
 
   const isFinalStep = step === CreatePackSteps.ReviewAndMint;
-  const shouldDisable =
-    !isValidStep || !connected || isLoading || buttonLoading;
+  const shouldDisable = !isValidStep || !connected || isLoading;
 
   const handleContinue = (): void => {
     if (isFinalStep) {
@@ -52,7 +45,7 @@ const Sidebar = ({
         onClick={handleContinue}
         disabled={shouldDisable}
       >
-        {buttonLoading ? <Spin /> : CONTINUE_TITLES[step]}
+        {CONTINUE_TITLES[step]}
       </Button>
 
       {step !== CreatePackSteps.SelectItems && (

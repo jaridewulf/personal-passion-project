@@ -5,5 +5,4 @@ export interface SidebarProps {
   isValidStep: boolean;
   setStep: (step: CreatePackSteps) => void;
   submit: () => void;
-  buttonLoading?: boolean;
 }

@@ -363,7 +363,7 @@ export const pullPack = async ({
     metadataKeys.map(m => newState.metadataByMetadata[m]),
   );
 
-  return newState;
+  return state;
 };
 
 export const pullAuctionSubaccounts = async (

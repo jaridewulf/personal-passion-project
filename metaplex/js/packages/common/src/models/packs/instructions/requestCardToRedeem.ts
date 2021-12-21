@@ -17,10 +17,10 @@ import {
 
 interface Params extends RequestCardToRedeemParams {
   packSetKey: PublicKey;
-  editionKey: StringPublicKey;
+  edition: StringPublicKey;
   editionMint: StringPublicKey;
-  voucherKey: StringPublicKey;
-  tokenAccount?: StringPublicKey;
+  packVoucher: StringPublicKey;
+  tokenAccount: StringPublicKey;
   wallet: PublicKey;
   randomOracle: StringPublicKey;
 }
@@ -28,9 +28,9 @@ interface Params extends RequestCardToRedeemParams {
 export async function requestCardToRedeem({
   index,
   packSetKey,
-  editionKey,
+  edition,
   editionMint,
-  voucherKey,
+  packVoucher,
   tokenAccount,
   wallet,
   randomOracle,
@@ -75,7 +75,7 @@ export async function requestCardToRedeem({
     },
     // edition
     {
-      pubkey: toPublicKey(editionKey),
+      pubkey: toPublicKey(edition),
       isSigner: false,
       isWritable: false,
     },
@@ -87,7 +87,7 @@ export async function requestCardToRedeem({
     },
     // pack_voucher
     {
-      pubkey: toPublicKey(voucherKey),
+      pubkey: toPublicKey(packVoucher),
       isSigner: false,
       isWritable: false,
     },
@@ -133,16 +133,13 @@ export async function requestCardToRedeem({
       isSigner: false,
       isWritable: false,
     },
-  ];
-
-  if (tokenAccount) {
     // user_token_account
-    keys.push({
+    {
       pubkey: toPublicKey(tokenAccount),
       isSigner: false,
       isWritable: true,
-    });
-  }
+    },
+  ];
 
   return new TransactionInstruction({
     keys,

@@ -1,28 +1,31 @@
 {
-  "name": "Old Skool Racers #18",
+  "name": "Old Skool Racers #15",
   "symbol": "SOL-OSR",
   "description": "Race your NFTs against your friends.",
   "seller_fee_basis_points": 250,
   "image": "image.png",
   "external_url": "https://jaridewulf.be/",
-  "edition": 18,
+  "edition": 15,
   "attributes": [
     {
-      "horsepower": 239
+      "trait_type": "horsepower",
+      "value": 132
     },
     {
-      "topspeed": 179
+      "trait_type": "topspeed",
+      "value": 143
     },
     {
-      "transmission": 5
+      "trait_type": "transmission",
+      "value": 6
     },
     {
       "trait_type": "wheels",
-      "value": "thin"
+      "value": "cross"
     },
     {
       "trait_type": "chasis",
-      "value": "blue"
+      "value": "green"
     },
     {
       "trait_type": "bumper",

@@ -1,4 +1,4 @@
-import { PackDistributionType } from '@oyster/common';
+import { Creator, PackDistributionType } from '@oyster/common';
 import { Keypair } from '@solana/web3.js';
 import { BN } from 'bn.js';
 import { notification } from 'antd';
@@ -11,6 +11,14 @@ import {
   SelectedItem,
   SelectedVoucher,
 } from './interface';
+
+export const validCreatorsFilter = ({ metadata }: SafetyDepositDraft) => {
+  const areValidCreators = !(metadata.info.data.creators || []).some(
+    (c: Creator) => !c.verified,
+  );
+
+  return areValidCreators;
+};
 
 export const isItemInPackFilter = (
   selectedItems: Record<string, SafetyDepositDraft>,
@@ -39,14 +47,22 @@ export const packItemsFilter =
   (selectedItems: Record<string, SafetyDepositDraft>, isUnlimited: boolean) =>
   (item: SafetyDepositDraft) => {
     if (Object.values(selectedItems).length === 0) {
-      return nonUniqueItemFilter(item) && masterEditionFilter(item);
+      return (
+        nonUniqueItemFilter(item) &&
+        masterEditionFilter(item) &&
+        validCreatorsFilter(item)
+      );
     }
 
     const shouldShowItemBasedOnSupply = isUnlimited
       ? unlimitedSupplyFilter(item)
       : limitedSupplyFilter(item);
 
-    return shouldShowItemBasedOnSupply && masterEditionFilter(item);
+    return (
+      shouldShowItemBasedOnSupply &&
+      masterEditionFilter(item) &&
+      validCreatorsFilter(item)
+    );
   };
 
 export const vouchersFilter =
@@ -55,7 +71,8 @@ export const vouchersFilter =
     !isItemInPackFilter(selectedItems, item) &&
     nonUniqueItemFilter(item) &&
     masterEditionFilter(item) &&
-    hasSupplyFilter(item);
+    hasSupplyFilter(item) &&
+    validCreatorsFilter(item);
 
 export const mapSelectedItems = ({
   selectedItems,

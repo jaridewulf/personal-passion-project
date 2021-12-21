@@ -6,5 +6,4 @@ export interface SelectItemsStepProps {
   selectedItems: Record<string, SafetyDepositDraft>;
   showSupply?: boolean;
   emptyMessage?: string;
-  isLoading?: boolean;
 }

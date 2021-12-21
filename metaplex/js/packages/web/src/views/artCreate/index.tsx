@@ -328,7 +328,7 @@ const UploadStep = (props: {
 
   const [customURL, setCustomURL] = useState<string>('');
   const [customURLErr, setCustomURLErr] = useState<string>('');
-  const disableContinue = !(coverFile || (!customURLErr && !!customURL));
+  const disableContinue = !coverFile || !!customURLErr;
 
   useEffect(() => {
     props.setAttributes({
@@ -398,10 +398,6 @@ const UploadStep = (props: {
           accept=".png,.jpg,.gif,.mp4,.svg"
           style={{ padding: 20, background: 'rgba(255, 255, 255, 0.08)' }}
           multiple={false}
-          onRemove={() => {
-            setMainFile(undefined);
-            setCoverFile(undefined);
-          }}
           customRequest={info => {
             // dont upload files here, handled outside of the control
             info?.onSuccess?.({}, null as any);
@@ -523,7 +519,7 @@ const UploadStep = (props: {
           type="primary"
           size="large"
           disabled={disableContinue}
-          onClick={async () => {
+          onClick={() => {
             props.setAttributes({
               ...props.attributes,
               properties: {
@@ -543,16 +539,14 @@ const UploadStep = (props: {
                     } as MetadataFile;
                   }),
               },
-              image: coverFile?.name || customURL || '',
+              image: coverFile?.name || '',
               animation_url:
                 props.attributes.properties?.category !==
                   MetadataCategory.Image && customURL
                   ? customURL
                   : mainFile && mainFile.name,
             });
-            const url = await fetch(customURL).then(res => res.blob());
-            const files = [coverFile, mainFile, customURL ? new File([url], customURL) : '']
-              .filter(f => f) as File[];
+            const files = [coverFile, mainFile].filter(f => f) as File[];
 
             props.setFiles(files);
             props.confirm();

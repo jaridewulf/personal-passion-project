@@ -465,7 +465,7 @@ pub mod auction_house {
 
         if !is_native {
             assert_is_ata(payment_account, &wallet.key(), &treasury_mint.key())?;
-            invoke(
+            invoke_signed(
                 &spl_token::instruction::transfer(
                     token_program.key,
                     &payment_account.key(),
@@ -480,10 +480,11 @@ pub mod auction_house {
                     token_program.to_account_info(),
                     transfer_authority.to_account_info(),
                 ],
+                &[],
             )?;
         } else {
             assert_keys_equal(payment_account.key(), wallet.key())?;
-            invoke(
+            invoke_signed(
                 &system_instruction::transfer(
                     &payment_account.key(),
                     &escrow_payment_account.key(),
@@ -494,6 +495,7 @@ pub mod auction_house {
                     payment_account.to_account_info(),
                     system_program.to_account_info(),
                 ],
+                &[],
             )?;
         }
 
@@ -545,7 +547,7 @@ pub mod auction_house {
             .ok_or(ErrorCode::NumericalOverflow)?;
 
         if token_account.owner == wallet.key() && wallet.is_signer {
-            invoke(
+            invoke_signed(
                 &revoke(
                     &token_program.key(),
                     &token_account.key(),
@@ -558,6 +560,7 @@ pub mod auction_house {
                     token_account.to_account_info(),
                     wallet.to_account_info(),
                 ],
+                &[],
             )?;
         }
 
@@ -921,7 +924,7 @@ pub mod auction_house {
         }
 
         if wallet.is_signer {
-            invoke(
+            invoke_signed(
                 &approve(
                     &token_program.key(),
                     &token_account.key(),
@@ -937,6 +940,7 @@ pub mod auction_house {
                     program_as_signer.to_account_info(),
                     wallet.to_account_info(),
                 ],
+                &[],
             )?;
         }
 
@@ -1042,7 +1046,7 @@ pub mod auction_house {
                 let diff = buyer_price
                     .checked_sub(escrow_payment_account.lamports())
                     .ok_or(ErrorCode::NumericalOverflow)?;
-                invoke(
+                invoke_signed(
                     &system_instruction::transfer(
                         &payment_account.key(),
                         &escrow_payment_account.key(),
@@ -1053,6 +1057,7 @@ pub mod auction_house {
                         escrow_payment_account.to_account_info(),
                         system_program.to_account_info(),
                     ],
+                    &[],
                 )?;
             }
         } else {

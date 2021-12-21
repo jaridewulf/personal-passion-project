@@ -1,9 +1,6 @@
 import {
-  decodeEdition,
   findProvingProcessProgramAddress,
-  getEdition,
   ParsedAccount,
-  StringPublicKey,
   toPublicKey,
 } from '@oyster/common';
 import { ProvingProcess } from '@oyster/common/dist/lib/models/packs/accounts/ProvingProcess';
@@ -18,65 +15,30 @@ import { fetchProvingProcessWithRetry } from './fetchProvingProcessWithRetry';
 
 export const getProvingProcess = async ({
   pack,
-  provingProcess,
-  voucherMint,
-  vouchers,
+  provingProcessKey,
+  voucherEditionKey,
+  userVouchers,
   accountByMint,
   connection,
   wallet,
 }: GetProvingProcessParams): Promise<ParsedAccount<ProvingProcess>> => {
-  let editionMint: StringPublicKey;
-
-  if (provingProcess) {
-    editionMint = provingProcess.info.voucherMint;
-  } else if (voucherMint) {
-    editionMint = voucherMint;
-  } else {
-    throw new Error('No voucher and proving process');
+  // ToDo: This will be executed even if not all the cards are requested.
+  if (provingProcessKey) {
+    return fetchProvingProcessWithRetry({
+      provingProcessKey,
+      connection,
+    });
   }
 
-  const editionKey = await getEdition(editionMint);
-  const editionData = await connection.getAccountInfo(toPublicKey(editionKey));
-
-  if (!editionData) {
-    throw new Error('No edition for voucher mint');
-  }
-
-  const edition = decodeEdition(editionData.data);
-  const voucher = Object.values(vouchers).find(
-    ({ info }) => info.master === edition.parent,
-  );
-
-  if (!voucher) {
+  if (!voucherEditionKey || !userVouchers[voucherEditionKey]) {
     throw new Error('Voucher is missing');
-  }
-
-  const voucherKey = voucher.pubkey;
-
-  const voucherTokenAccount = accountByMint.get(editionMint);
-
-  // Calculate already requested but not redeemed cards by summing values in cardsToRedeem
-  const alreadyRequestedCards = provingProcess?.info.cardsToRedeem
-    ? Object.values(
-        Object.fromEntries(provingProcess.info.cardsToRedeem),
-      ).reduce((a, b) => a + b)
-    : 0;
-  const redeemedCards = provingProcess?.info.cardsRedeemed || 0;
-
-  const cardsLeftToOpen =
-    pack.info.allowedAmountToRedeem - redeemedCards - alreadyRequestedCards;
-
-  if (cardsLeftToOpen === 0 && provingProcess) {
-    return provingProcess;
   }
 
   return requestCardsUsingVoucher({
     pack,
-    cardsLeftToOpen,
-    voucherTokenAccount,
-    voucherKey,
-    editionKey,
-    editionMint,
+    voucherEditionKey,
+    userVouchers,
+    accountByMint,
     connection,
     wallet,
   });
@@ -84,11 +46,9 @@ export const getProvingProcess = async ({
 
 const requestCardsUsingVoucher = async ({
   pack,
-  cardsLeftToOpen,
-  voucherTokenAccount,
-  voucherKey,
-  editionKey,
-  editionMint,
+  voucherEditionKey,
+  userVouchers,
+  accountByMint,
   connection,
   wallet,
 }: RequestCardsUsingVoucherParams): Promise<ParsedAccount<ProvingProcess>> => {
@@ -96,21 +56,29 @@ const requestCardsUsingVoucher = async ({
     throw new WalletNotConnectedError();
   }
 
+  const { mint: voucherMint } = userVouchers[voucherEditionKey];
+
+  const voucherTokenAccount = accountByMint.get(voucherMint);
+  if (!voucherTokenAccount?.pubkey) {
+    throw new Error('Voucher token account is missing');
+  }
+
+  const cardsLeftToOpen = pack.info.allowedAmountToRedeem;
+
   await requestCards({
+    userVouchers,
     pack,
-    voucherKey,
-    editionKey,
-    editionMint,
+    voucherEditionKey,
     connection,
     wallet,
     cardsLeftToOpen,
-    tokenAccount: voucherTokenAccount?.pubkey,
+    tokenAccount: voucherTokenAccount.pubkey,
   });
 
   const provingProcessKey = await findProvingProcessProgramAddress(
     toPublicKey(pack.pubkey),
     toPublicKey(wallet.publicKey),
-    toPublicKey(editionMint),
+    toPublicKey(voucherMint),
   );
 
   return fetchProvingProcessWithRetry({

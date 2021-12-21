@@ -7,7 +7,7 @@ const network = NETWORK.sol;
 // General metadata for Ethereum
 const namePrefix = "Old Skool Racers";
 const description = "Race your NFTs against your friends.";
-const baseUri = "ipfs://NewUriToReplace";
+const baseUri = "CHANGE_BASE_URI"; //Not needed for Solana, using Metaplex
 
 const solanaMetadata = {
   symbol: "SOL-OSR",
@@ -58,7 +58,7 @@ const layerConfigurations = [
 const shuffleLayerConfigurations = true;
 
 //Show extra info while creating collection
-const debugLogs = false;
+const debugLogs = true;
 
 const format = {
   width: 276,

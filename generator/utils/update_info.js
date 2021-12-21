@@ -19,6 +19,7 @@ data.forEach((item) => {
     item.name = `${namePrefix} #${item.edition}`;
     item.description = description;
     item.creators = solanaMetadata.creators;
+    item.image = `${baseUri}/${item.edition}.png`;
   } else {
     item.name = `${namePrefix} #${item.edition}`;
     item.description = description;
