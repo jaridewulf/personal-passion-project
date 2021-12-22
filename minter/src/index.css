@@ -21,6 +21,7 @@ code {
 .tokenList{
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
 }
 
 .minter{
