@@ -217,6 +217,7 @@ const Home = (props: HomeProps) => {
       </MintContainer>
 
       <div>
+              {wallet ? <h1>Your tokens</h1> : null}
               {tokensMetadata ? tokensMetadata.map(tokenMetadata => <TokenCard uri={tokenMetadata.data.data.uri}/>)
               : <p>loading...</p>}
       </div>
