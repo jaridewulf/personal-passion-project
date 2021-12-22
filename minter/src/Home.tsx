@@ -4,10 +4,10 @@ import Countdown from "react-countdown";
 import { Button, CircularProgress, Snackbar } from "@material-ui/core";
 import Alert from "@material-ui/lab/Alert";
 import * as metaplex from "@metaplex/js";
-
+import TokenCard from "./components/TokenCard";
 import * as anchor from "@project-serum/anchor";
 
-import { LAMPORTS_PER_SOL, Connection, clusterApiUrl, PublicKey } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
@@ -20,7 +20,6 @@ import {
   shortenAddress,
 } from "./candy-machine";
 import { env } from "process";
-import { token } from "@project-serum/anchor/dist/utils";
 
 const ConnectButton = styled(WalletDialogButton)``;
 
@@ -41,7 +40,7 @@ export interface HomeProps {
 
 const Home = (props: HomeProps) => {
   const [balance, setBalance] = useState<number>();
-  const [tokens, setTokens] = useState({});
+  const [tokensMetadata, setTokensMetadata] =  useState<metaplex.programs.metadata.Metadata[]>([]);
   const [isActive, setIsActive] = useState(false); // true when countdown completes
   const [isSoldOut, setIsSoldOut] = useState(false); // true when items remaining is zero
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
@@ -156,13 +155,14 @@ const Home = (props: HomeProps) => {
 
   useEffect(() => {
     (async () => {
-      if (wallet) {
-        //Fetch all tokens
-        const tokenMetadata = await metaplex.programs.metadata.Metadata.findByOwnerV2(props.connection, wallet.publicKey);
-        console.log(tokenMetadata);
-        
+      if (wallet) {  
         const balance = await props.connection.getBalance(wallet.publicKey);
         setBalance(balance / LAMPORTS_PER_SOL);
+
+        //Fetch all tokens
+        const tokensMetadataTemp = await metaplex.programs.metadata.Metadata.findByOwnerV2(props.connection, wallet.publicKey);
+        console.log(tokensMetadataTemp);
+        setTokensMetadata(tokensMetadataTemp);
       }
     })();
   }, [wallet, props.connection]);
@@ -215,6 +215,11 @@ const Home = (props: HomeProps) => {
           </MintButton>
         )}
       </MintContainer>
+
+      <div>
+              {tokensMetadata ? tokensMetadata.map(tokenMetadata => <TokenCard uri={tokenMetadata.data.data.uri}/>)
+              : <p>loading...</p>}
+      </div>
 
       <Snackbar
         open={alertState.open}
