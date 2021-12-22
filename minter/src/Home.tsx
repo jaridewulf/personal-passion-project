@@ -20,6 +20,7 @@ import {
   shortenAddress,
 } from "./candy-machine";
 import { env } from "process";
+import { StylesContext } from "@material-ui/styles";
 
 const ConnectButton = styled(WalletDialogButton)``;
 
@@ -175,21 +176,24 @@ const Home = (props: HomeProps) => {
 
   return (
     <main>
+      <div className="minter">
+        <h2>Minter</h2>
       {wallet && (
-        <p>Wallet {shortenAddress(wallet.publicKey.toBase58() || "")}</p>
+        <p>Wallet {wallet.publicKey.toBase58() || ""}</p>
       )}
 
-      {wallet && <p>Balance: {(balance || 0).toLocaleString()} SOL</p>}
+      {wallet && <p>Balance {(balance || 0).toLocaleString()} SOL</p>}
 
-      {wallet && <p>Total Available: {itemsAvailable}</p>}
+      {wallet && <p>{itemsRedeemed}/{itemsAvailable} redeemed</p>}
 
-      {wallet && <p>Redeemed: {itemsRedeemed}</p>}
-
-      {wallet && <p>Remaining: {itemsRemaining}</p>}
+      {wallet && <p>{itemsRemaining} remaining tokens</p>}
 
       <MintContainer>
         {!wallet ? (
+          <>
+          <p>Connect using your Phantom Wallet</p>
           <ConnectButton>Connect Wallet</ConnectButton>
+          </>
         ) : (
           <MintButton
             disabled={isSoldOut || isMinting || !isActive}
@@ -215,11 +219,14 @@ const Home = (props: HomeProps) => {
           </MintButton>
         )}
       </MintContainer>
+      </div>
 
       <div>
               {wallet ? <h1>Your tokens</h1> : null}
+              <div className="tokenList">
               {tokensMetadata ? tokensMetadata.map(tokenMetadata => <TokenCard uri={tokenMetadata.data.data.uri}/>)
               : <p>loading...</p>}
+              </div>
       </div>
 
       <Snackbar

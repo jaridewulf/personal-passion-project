@@ -1,5 +1,6 @@
 import { useState, useEffect, FC } from "react";
 import axios from 'axios';
+import styles from "./TokenCard.module.css";
 
 interface TokenCardProps {
     uri: string;
@@ -35,6 +36,7 @@ const TokenCard: FC<TokenCardProps> = ({ uri }) => {
                     uri,
                 );
                 setData(result.data);
+                console.log(result.data);
                 let tempCar:Car = {
                     bumper: "unknown",
                     chasis: "unknown",
@@ -60,7 +62,7 @@ const TokenCard: FC<TokenCardProps> = ({ uri }) => {
     return (
         <>
         {data && carProps ? 
-        <div>
+        <div className={styles.card}>
             <h2>{data.name}</h2>
             <img src={data.image} alt={data.name + " image"} />
             <h3>Specs</h3>
