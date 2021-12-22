@@ -1,6 +1,6 @@
 {
   "name": "candy-machine-mint",
-  "homepage": "https://jaridewulf.github.io/personal-passion-project/",
+  "homepage": "https://jaridewulf.github.io/personal-passion-project/minter",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
