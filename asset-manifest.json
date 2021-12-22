@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/personal-passion-project/minter/static/css/main.76598800.chunk.css",
+    "main.js": "/personal-passion-project/minter/static/js/main.af0d5607.chunk.js",
+    "main.js.map": "/personal-passion-project/minter/static/js/main.af0d5607.chunk.js.map",
+    "runtime-main.js": "/personal-passion-project/minter/static/js/runtime-main.90f21967.js",
+    "runtime-main.js.map": "/personal-passion-project/minter/static/js/runtime-main.90f21967.js.map",
+    "static/js/2.5caefc9a.chunk.js": "/personal-passion-project/minter/static/js/2.5caefc9a.chunk.js",
+    "static/js/2.5caefc9a.chunk.js.map": "/personal-passion-project/minter/static/js/2.5caefc9a.chunk.js.map",
+    "static/js/3.c61ccfa0.chunk.js": "/personal-passion-project/minter/static/js/3.c61ccfa0.chunk.js",
+    "static/js/3.c61ccfa0.chunk.js.map": "/personal-passion-project/minter/static/js/3.c61ccfa0.chunk.js.map",
+    "index.html": "/personal-passion-project/minter/index.html",
+    "static/css/main.76598800.chunk.css.map": "/personal-passion-project/minter/static/css/main.76598800.chunk.css.map",
+    "static/js/2.5caefc9a.chunk.js.LICENSE.txt": "/personal-passion-project/minter/static/js/2.5caefc9a.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.90f21967.js",
+    "static/js/2.5caefc9a.chunk.js",
+    "static/css/main.76598800.chunk.css",
+    "static/js/main.af0d5607.chunk.js"
+  ]
+}
