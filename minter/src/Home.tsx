@@ -3,6 +3,7 @@ import styled from "styled-components";
 import Countdown from "react-countdown";
 import { Button, CircularProgress, Snackbar } from "@material-ui/core";
 import Alert from "@material-ui/lab/Alert";
+import * as metaplex from "@metaplex/js";
 
 import * as anchor from "@project-serum/anchor";
 
@@ -19,6 +20,7 @@ import {
   shortenAddress,
 } from "./candy-machine";
 import { env } from "process";
+import { token } from "@project-serum/anchor/dist/utils";
 
 const ConnectButton = styled(WalletDialogButton)``;
 
@@ -155,27 +157,12 @@ const Home = (props: HomeProps) => {
   useEffect(() => {
     (async () => {
       if (wallet) {
-        const connectionweb3 = new Connection(
-          clusterApiUrl("devnet"),
-          "confirmed"
-        );
-
-        const newPubKey = new PublicKey(
-          "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        ) 
- 
-        const tokens = await connectionweb3.getTokenAccountsByOwner(wallet.publicKey, {programId: newPubKey});
-        console.log("tokens")
-        console.log(tokens)
-        //setTokens(tokens);
-
-        const tokenAcc = await connectionweb3.getAccountInfo(tokens.value[0].pubkey);
-        console.log("dsqdqdq")
-        console.log(tokenAcc);
-
+        //Fetch all tokens
+        const tokenMetadata = await metaplex.programs.metadata.Metadata.findByOwnerV2(props.connection, wallet.publicKey);
+        console.log(tokenMetadata);
+        
         const balance = await props.connection.getBalance(wallet.publicKey);
         setBalance(balance / LAMPORTS_PER_SOL);
-
       }
     })();
   }, [wallet, props.connection]);
@@ -193,7 +180,6 @@ const Home = (props: HomeProps) => {
       )}
 
       {wallet && <p>Balance: {(balance || 0).toLocaleString()} SOL</p>}
-      {wallet && console.log(tokens)}
 
       {wallet && <p>Total Available: {itemsAvailable}</p>}
 
