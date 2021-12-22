@@ -6,7 +6,7 @@ import Alert from "@material-ui/lab/Alert";
 
 import * as anchor from "@project-serum/anchor";
 
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, Connection, clusterApiUrl, PublicKey } from "@solana/web3.js";
 
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
@@ -18,6 +18,7 @@ import {
   mintOneToken,
   shortenAddress,
 } from "./candy-machine";
+import { env } from "process";
 
 const ConnectButton = styled(WalletDialogButton)``;
 
@@ -38,6 +39,7 @@ export interface HomeProps {
 
 const Home = (props: HomeProps) => {
   const [balance, setBalance] = useState<number>();
+  const [tokens, setTokens] = useState({});
   const [isActive, setIsActive] = useState(false); // true when countdown completes
   const [isSoldOut, setIsSoldOut] = useState(false); // true when items remaining is zero
   const [isMinting, setIsMinting] = useState(false); // true when user got to press MINT
@@ -153,8 +155,27 @@ const Home = (props: HomeProps) => {
   useEffect(() => {
     (async () => {
       if (wallet) {
+        const connectionweb3 = new Connection(
+          clusterApiUrl("devnet"),
+          "confirmed"
+        );
+
+        const newPubKey = new PublicKey(
+          "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        ) 
+ 
+        const tokens = await connectionweb3.getTokenAccountsByOwner(wallet.publicKey, {programId: newPubKey});
+        console.log("tokens")
+        console.log(tokens)
+        //setTokens(tokens);
+
+        const tokenAcc = await connectionweb3.getAccountInfo(tokens.value[0].pubkey);
+        console.log("dsqdqdq")
+        console.log(tokenAcc);
+
         const balance = await props.connection.getBalance(wallet.publicKey);
         setBalance(balance / LAMPORTS_PER_SOL);
+
       }
     })();
   }, [wallet, props.connection]);
@@ -172,6 +193,7 @@ const Home = (props: HomeProps) => {
       )}
 
       {wallet && <p>Balance: {(balance || 0).toLocaleString()} SOL</p>}
+      {wallet && console.log(tokens)}
 
       {wallet && <p>Total Available: {itemsAvailable}</p>}
 
